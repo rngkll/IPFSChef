@@ -1,0 +1,3 @@
+ipfs daemon --enable-pubsub-experiment
+/Users/asegura/golang/src/github.com/ipfs/go-ipfs/cmd/ipfs/ipfs pubsub sub ipfschef
+go run live_clear.go | /Users/asegura/golang/src/github.com/ipfs/go-ipfs/cmd/ipfs/ipfs pubsub pub ipfschef
