@@ -2,8 +2,11 @@ package main
 
 import (
 	"fmt"
+	"github.com/ipfs/go-ipfs-api"
 	"github.com/zencoder/go-dash/mpd"
 )
+
+var sh *shell.Shell
 
 func main() {
 
@@ -24,4 +27,7 @@ func main() {
 
 	mpdStr, _ := m.WriteToString()
 	fmt.Println(mpdStr)
+
+	sh = shell.NewShell("localhost:5001")
+	sh.PubSubPublish("IpfsChefChannel", mpdStr)
 }

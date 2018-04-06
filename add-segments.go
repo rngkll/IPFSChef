@@ -1,31 +1,18 @@
 package main
 
 import (
-	"context"
-	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"sort"
 
-	core "github.com/ipfs/go-ipfs/core"
-	coreapi "github.com/ipfs/go-ipfs/core/coreapi"
-	coreiface "github.com/ipfs/go-ipfs/core/coreapi/interface"
-	//coreunix "github.com/ipfs/go-ipfs/core/coreunix"
-	keystore "github.com/ipfs/go-ipfs/keystore"
-	//mdag "github.com/ipfs/go-ipfs/merkledag"
-	repo "github.com/ipfs/go-ipfs/repo"
-	config "github.com/ipfs/go-ipfs/repo/config"
-	//unixfs "github.com/ipfs/go-ipfs/unixfs"
-
-	datastore "gx/ipfs/QmXRKBQA4wXP7xWbFiZsR1GP4HV6wMDQ1aWFxZZ4uBcPX9/go-datastore"
-	syncds "gx/ipfs/QmXRKBQA4wXP7xWbFiZsR1GP4HV6wMDQ1aWFxZZ4uBcPX9/go-datastore/sync"
-	peer "gx/ipfs/QmZoWKhxUmZ2seW4BzX6fJkNR8hh9PsGModr7q171yq2SS/go-libp2p-peer"
-	ci "gx/ipfs/QmaPbCnUMBohSGo3KnxEa2bHqyJVVeEEcwtqJAYxerieBo/go-libp2p-crypto"
+	"github.com/ipfs/go-ipfs-api"
 )
 
-func GetOldestFile(path string) string {
+var sh *shell.Shell
+
+func GetOldestFile(path string, n int) string {
 
 	type Fileinfo struct {
 		Timestamp int64
@@ -57,85 +44,27 @@ func GetOldestFile(path string) string {
 	//fmt.Println(listfiles)
 	//fmt.Println(listfiles[0].Filename)
 
-	return listfiles[0].Filename
+	return listfiles[n].Filename
 }
 
-/*func AddFile(ipfs *core.IpfsNode, file string) (string, error) {
-	fi, err := os.Open(file)
+func FileAdd(filename string) string {
+	sh = shell.NewShell("localhost:5001")
+	fi, err := os.Open(filename)
 	if err != nil {
-		return "", err
+		log.Fatal(err)
 	}
-
-	return coreunix.Add(ipfs, fi)
-}*/
-
-func makeAPIIdent(ctx context.Context) (*core.IpfsNode, coreiface.CoreAPI, error) {
-	var ident config.Identity
-
-	sk, pk, err := ci.GenerateKeyPair(ci.RSA, 512)
+	hash, err := sh.Add(fi)
 	if err != nil {
-		return nil, nil, err
+		log.Fatal(err)
 	}
 
-	id, err := peer.IDFromPublicKey(pk)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	kbytes, err := sk.Bytes()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	ident = config.Identity{
-		PeerID:  id.Pretty(),
-		PrivKey: base64.StdEncoding.EncodeToString(kbytes),
-	}
-
-	r := &repo.Mock{
-		C: config.Config{
-			Identity: ident,
-		},
-		D: syncds.MutexWrap(datastore.NewMapDatastore()),
-		K: keystore.NewMemKeystore(),
-	}
-	node, err := core.NewNode(ctx, &core.BuildCfg{Repo: r})
-	if err != nil {
-		return nil, nil, err
-	}
-	api := coreapi.NewCoreAPI(node)
-	return node, api, nil
-}
-
-func makeAPI(ctx context.Context) (*core.IpfsNode, coreiface.CoreAPI, error) {
-	return makeAPIIdent(ctx)
-}
-
-func FileAdd(path string) (int, error) {
-	ctx := context.Background()
-	_, api, err := makeAPI(ctx)
-	if err != nil {
-		return 1, err
-	}
-
-	fi, err := os.Open(path)
-	if err != nil {
-		return 1, err
-	}
-
-	p, err := api.Unixfs().Add(ctx, fi)
-	if err != nil {
-		return 1, err
-	}
-
-	fmt.Println(p)
-	return 0, err
+	return hash
 
 }
 
 func main() {
-	filename := GetOldestFile("stream/")
-	fmt.Println(filename)
-	FileAdd(filename)
+	filename := GetOldestFile("stream/", 0)
+	out := FileAdd("stream/" + filename)
+	fmt.Println(filename, out)
 
 }
