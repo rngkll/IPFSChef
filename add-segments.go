@@ -47,24 +47,32 @@ func GetOldestFile(path string, n int) string {
 	return listfiles[n].Filename
 }
 
-func FileAdd(filename string) string {
+func fileAdd(filename string) (string, string) {
 	sh = shell.NewShell("localhost:5001")
+
 	fi, err := os.Open(filename)
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	hash, err := sh.Add(fi)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	return hash
+	// Temp code to remove file
+	err = os.Remove(filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(filename, hash)
+	return filename, hash
 
 }
 
 func main() {
 	filename := GetOldestFile("stream/", 0)
-	out := FileAdd("stream/" + filename)
-	fmt.Println(filename, out)
+	go fileAdd("stream/" + filename)
 
 }
