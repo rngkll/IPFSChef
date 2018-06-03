@@ -1,1 +1,4 @@
 *.ogg
+*.mkv
+tools/webm_vod/*
+*.swp
